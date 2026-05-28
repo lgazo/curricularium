@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const pkgRoot = resolve(here, '..');
-const src = resolve(pkgRoot, '../../node_modules/htmx.org/dist/htmx.min.js');
+const src = resolve(pkgRoot, 'node_modules/htmx.org/dist/htmx.min.js');
 const dest = resolve(pkgRoot, 'src/static/htmx.min.js');
 
 await mkdir(dirname(dest), { recursive: true });
