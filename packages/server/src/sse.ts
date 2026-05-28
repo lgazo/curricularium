@@ -1,6 +1,6 @@
 export type SSEEvent =
   | { event: 'reload'; data?: Record<string, unknown> }
-  | { event: 'error'; data: { message: string; file?: string } };
+  | { event: 'parse-error'; data: { message: string; file?: string } };
 
 type Client = {
   send: (event: SSEEvent) => void | Promise<void>;

@@ -1,5 +1,6 @@
 import chokidar, { type FSWatcher } from 'chokidar';
 import { broadcast } from './sse.js';
+import { loadSource } from './parse/index.js';
 
 let active: FSWatcher | null = null;
 let activePath: string | null = null;
@@ -16,7 +17,22 @@ export function startWatching(path: string): void {
   });
   const fire = () => {
     if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => broadcast({ event: 'reload' }), 150);
+    debounceTimer = setTimeout(async () => {
+      if (!activePath) return;
+      const result = await loadSource(activePath);
+      if (result.ok) {
+        broadcast({ event: 'reload' });
+      } else {
+        const first = result.errors[0];
+        broadcast({
+          event: 'parse-error',
+          data: {
+            message: first?.message ?? 'parse failed',
+            file: first?.file,
+          },
+        });
+      }
+    }, 150);
   };
   active.on('add', fire);
   active.on('change', fire);
