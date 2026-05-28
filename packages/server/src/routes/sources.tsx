@@ -19,8 +19,12 @@ async function renderShell(c: Context, errorMessage?: string) {
 
   return c.html(
     <Layout title="Curricularium">
-      <Shell sources={config.sources} activeSourceId={config.activeSourceId} availability={availability} />
-      {errorMessage ? <div class="add-source-error">{errorMessage}</div> : null}
+      <Shell
+        sources={config.sources}
+        activeSourceId={config.activeSourceId}
+        availability={availability}
+        addSourceError={errorMessage}
+      />
     </Layout>,
   );
 }

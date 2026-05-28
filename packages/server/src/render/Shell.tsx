@@ -5,9 +5,10 @@ type Props = {
   sources: Source[];
   activeSourceId: string | null;
   availability: Record<string, 'ok' | 'missing' | 'unreadable'>;
+  addSourceError?: string;
 };
 
-export const Shell: FC<Props> = ({ sources, activeSourceId, availability }) => (
+export const Shell: FC<Props> = ({ sources, activeSourceId, availability, addSourceError }) => (
   <div class="shell">
     <header class="shell-header no-print">
       <h1 class="shell-title">Curricularium</h1>
@@ -71,6 +72,7 @@ export const Shell: FC<Props> = ({ sources, activeSourceId, availability }) => (
             Path
             <input name="path" required placeholder="/absolute/path/to/cv-md" />
           </label>
+          {addSourceError ? <div class="add-source-error">{addSourceError}</div> : null}
           <button type="submit">Add</button>
         </form>
       </section>
