@@ -1,0 +1,16 @@
+{
+  "name": "curricularium",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Local markdown-to-CV web app",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm -F @curricularium/server dev",
+    "typecheck": "pnpm -r typecheck",
+    "vendor:htmx": "pnpm -F @curricularium/server vendor:htmx"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  },
+  "packageManager": "pnpm@9.0.0"
+}
