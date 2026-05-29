@@ -101,15 +101,19 @@ export function specCvToJsonResume(cv: SpecCV): JsonResume {
     ...bodyToSummaryHighlights(c.body),
   }));
 
-  const projects = cv.projects.map((p) => ({
-    name: p.title,
-    description: p.body ? bodyToSummaryHighlights(p.body).summary : undefined,
-    url: p.url ?? undefined,
-    startDate: formatDateISO(p.periodStart) ?? undefined,
-    endDate: p.periodEnd ? formatDateISO(p.periodEnd) ?? undefined : undefined,
-    keywords: p.tech.length ? p.tech : undefined,
-    roles: p.roles.length ? p.roles : undefined,
-  }));
+  const projects = cv.projects.map((p) => {
+    const split = p.body ? bodyToSummaryHighlights(p.body) : {};
+    return {
+      name: p.title,
+      description: split.summary,
+      url: p.url ?? undefined,
+      startDate: formatDateISO(p.periodStart) ?? undefined,
+      endDate: p.periodEnd ? formatDateISO(p.periodEnd) ?? undefined : undefined,
+      keywords: p.tech.length ? p.tech : undefined,
+      roles: p.roles.length ? p.roles : undefined,
+      highlights: split.highlights,
+    };
+  });
 
   if (cv.variant.collapseOpenSource) {
     out.projects = [
@@ -136,7 +140,7 @@ export function specCvToJsonResume(cv: SpecCV): JsonResume {
     title: a.title,
     date: formatDateISO(a.date) ?? undefined,
     awarder: a.awarder,
-    summary: a.body || undefined,
+    summary: a.body.trim() || undefined,
   }));
 
   out.publications = cv.publications.map((p) => ({
@@ -144,7 +148,7 @@ export function specCvToJsonResume(cv: SpecCV): JsonResume {
     publisher: p.publisher,
     releaseDate: formatDateISO(p.date) ?? undefined,
     url: p.url ?? undefined,
-    summary: p.body || undefined,
+    summary: p.body.trim() || undefined,
   }));
 
   if (cv.skills) {
@@ -166,14 +170,16 @@ export function specCvToJsonResume(cv: SpecCV): JsonResume {
 }
 
 function osToProject(o: SpecCV['openSource'][number]): ProjectEntry {
+  const split = o.body ? bodyToSummaryHighlights(o.body) : {};
   return {
     name: o.title,
-    description: o.body ? bodyToSummaryHighlights(o.body).summary : undefined,
+    description: split.summary,
     url: o.repoUrl,
     startDate: formatDateISO(o.periodStart) ?? undefined,
     endDate: formatDateISO(o.periodEnd) ?? undefined,
     keywords: o.tech.length ? o.tech : undefined,
     roles: [o.role],
+    highlights: split.highlights,
   };
 }
 

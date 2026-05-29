@@ -1,8 +1,17 @@
 import type { LoadWarning, SpecCV } from '../spec/model.js';
 
-const ACTION_VERB_LEAD = /^(led|shipped|architected|scaled|integrated|founded|rebuilt|delivered|built|drove|launched|grew|owned|managed|reduced|increased|created|migrated|negotiated|recruited|hired|established|introduced|coached|partnered|championed|orchestrated|landed|coordinated|standardised|standardized)\b/i;
+const ACTION_VERB_LEAD = /^(co-?led|co-?founded|co-?authored|co-?built|co-?designed|co-?developed|co-?organised|co-?organized|led|shipped|architected|scaled|integrated|founded|rebuilt|delivered|built|drove|launched|grew|owned|managed|reduced|increased|created|migrated|negotiated|recruited|hired|established|introduced|coached|partnered|championed|orchestrated|landed|coordinated|standardised|standardized|designed|developed|mentored|organised|organized|wrote|authored|spoke|presented|taught|guided|implemented|engineered|prototyped|spearheaded|expanded|raised|grew|conducted|invented|pioneered|defined|directed|supervised|oversaw|advised|consulted|published|reviewed|debugged|optimised|optimized|refactored|automated|deployed|maintained|administered|configured|operated|secured|tested|validated|trained|onboarded|facilitated|negotiated)\b/i;
 
 const ACRONYM_RE = /\b[A-Z]{2,6}\b/g;
+// Universal acronyms that don't need first-use intro per SPEC §7.10
+const COMMON_ACRONYMS = new Set([
+  'AI', 'ML', 'API', 'CEO', 'CTO', 'COO', 'CFO', 'CMO', 'CISO', 'VP', 'SVP', 'EVP',
+  'IT', 'UI', 'UX', 'HR', 'PR', 'PM', 'PO', 'QA', 'IP', 'TV',
+  'PDF', 'JSON', 'XML', 'HTML', 'CSS', 'SQL', 'HTTP', 'HTTPS', 'URL', 'URI',
+  'OS', 'CPU', 'GPU', 'RAM', 'SSD', 'HDD', 'USB', 'PC', 'PCI', 'CD', 'DVD',
+  'EU', 'US', 'USA', 'UK', 'UN', 'EEA', 'NATO', 'GDPR',
+  'PHD', 'BSC', 'MSC', 'MBA', 'BA', 'MA',
+]);
 
 export function computeLints(cv: SpecCV, bannedStrings: string[]): LoadWarning[] {
   const warnings: LoadWarning[] = [];
@@ -90,6 +99,7 @@ export function computeLints(cv: SpecCV, bannedStrings: string[]): LoadWarning[]
     const acronyms = new Set<string>();
     for (const m of atom.body.matchAll(ACRONYM_RE)) acronyms.add(m[0]);
     for (const acr of acronyms) {
+      if (COMMON_ACRONYMS.has(acr)) continue;
       if (!introduced.has(acr) && !seenFullTerms.has(acr)) {
         warnings.push({
           file: atom.file, category: 'acronym',

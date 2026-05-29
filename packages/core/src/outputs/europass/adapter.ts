@@ -50,6 +50,23 @@ export function buildEuropassXml(cv: SpecCV): string {
     lines.push('  </WorkExperience>');
   }
 
+  for (const p of cv.projects) {
+    lines.push('  <WorkExperience>');
+    const endDate = p.periodEnd ? formatDateEuropass(p.periodEnd) : ({ current: true } as const);
+    lines.push(`    <Period>${periodXml(formatDateEuropass(p.periodStart), endDate)}</Period>`);
+    lines.push(`    <Position><Label>${esc(p.title)}</Label></Position>`);
+    const employerName = p.client ? `${p.employer} — ${p.client}` : p.employer;
+    if (p.url) {
+      lines.push(`    <Employer><Name>${esc(employerName)}</Name><ContactInfo><Website><Contact>${esc(p.url)}</Contact></Website></ContactInfo></Employer>`);
+    } else {
+      lines.push(`    <Employer><Name>${esc(employerName)}</Name></Employer>`);
+    }
+    if (p.body.trim()) {
+      lines.push(`    <Activities><Label>${esc(p.body.trim())}</Label></Activities>`);
+    }
+    lines.push('  </WorkExperience>');
+  }
+
   for (const c of cv.community) {
     lines.push('  <WorkExperience>');
     lines.push(`    <Period>${periodXml(formatDateEuropass(c.periodStart), formatDateEuropass(c.periodEnd))}</Period>`);
