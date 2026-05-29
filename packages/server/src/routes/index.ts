@@ -6,6 +6,7 @@ import { previewRoutes } from './preview.js';
 import { assetRoutes } from './asset.js';
 import { eventRoutes } from './events.js';
 import { generateRoutes } from './generate.js';
+import { openOutputRoutes } from './openOutput.js';
 
 export function buildApp(): Hono {
   const app = new Hono();
@@ -16,5 +17,6 @@ export function buildApp(): Hono {
   app.route('/', assetRoutes);
   app.route('/', eventRoutes);
   app.route('/', generateRoutes);
+  app.route('/', openOutputRoutes);
   return app;
 }
