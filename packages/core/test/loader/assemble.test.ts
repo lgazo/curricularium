@@ -9,7 +9,7 @@ const manifest: VariantManifest = {
   title: 'Founder-CTO',
   targetRole: 'CTO',
   sectionOrder: [
-    'personal', 'identity', 'work-experience', 'project', 'skill',
+    'personal', 'work-experience', 'project', 'skill',
     'education', 'community', 'open-source', 'award', 'publication', 'language',
   ],
   lang: 'en',
@@ -128,5 +128,14 @@ describe('assemble', () => {
     ];
     const r = assemble('/fake/root', manifest, atoms);
     expect(r.cv.awards[0]!.body).toBe(' Kept.');
+  });
+
+  it('warns when identity is in sectionOrder but no about atom is present', () => {
+    const variantWithIdentity: VariantManifest = {
+      ...manifest,
+      sectionOrder: ['personal', 'identity', 'work-experience'],
+    };
+    const r = assemble('/fake/root', variantWithIdentity, []);
+    expect(r.warnings.some((w) => w.category === 'identity-missing')).toBe(true);
   });
 });

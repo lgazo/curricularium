@@ -107,6 +107,15 @@ export function assemble(variantRoot: string, variant: VariantManifest, atoms: A
 
   cv.projects = sortProjects(cv.projects);
 
+  if (variant.sectionOrder.includes('identity')) {
+    if (!cv.identity.about) {
+      warnings.push({
+        file: variantRoot, category: 'identity-missing',
+        message: 'identity/about.md not found; Professional Summary section will be empty',
+      });
+    }
+  }
+
   return { cv, warnings };
 }
 
