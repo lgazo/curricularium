@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm -F @curricularium/server dev",
+    "test": "pnpm -F @curricularium/core test",
     "typecheck": "pnpm -r typecheck",
     "vendor:htmx": "pnpm -F @curricularium/server vendor:htmx"
   },
