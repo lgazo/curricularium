@@ -1,0 +1,73 @@
+:root {
+  --sidebar-bg: #1e293b;
+  --sidebar-fg: #e2e8f0;
+  --sidebar-muted: #94a3b8;
+  --accent: #0ea5e9;
+  --main-bg: #ffffff;
+  --main-fg: #0f172a;
+  --rule: #e2e8f0;
+  --font-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Inter", var(--font-body);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body { font-family: var(--font-body); color: var(--main-fg); background: #f1f5f9; }
+
+/* ---------- CV ---------- */
+.cv-page {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+  background: var(--main-bg);
+  color: var(--main-fg);
+}
+.cv-sidebar {
+  background: var(--sidebar-bg);
+  color: var(--sidebar-fg);
+  padding: 32px 24px;
+}
+.cv-photo {
+  width: 120px; height: 120px; border-radius: 50%;
+  object-fit: cover; background: #475569; display: block;
+}
+.cv-photo--placeholder { background: linear-gradient(135deg, #475569, #334155); }
+.cv-name { font-family: var(--font-display); font-size: 22px; margin: 16px 0 4px; color: white; }
+.cv-headline { color: var(--sidebar-fg); margin: 0 0 4px; font-weight: 600; }
+.cv-location { color: var(--sidebar-muted); margin: 0 0 24px; font-size: 13px; }
+.cv-section-label { text-transform: uppercase; letter-spacing: 1.5px; font-size: 11px; color: var(--sidebar-muted); margin: 24px 0 8px; font-weight: 700; }
+.cv-contact ul { list-style: none; padding: 0; margin: 0; font-size: 13px; }
+.cv-contact li { margin-bottom: 4px; word-break: break-all; }
+.cv-contact a { color: var(--sidebar-fg); text-decoration: none; }
+.cv-contact a:hover { text-decoration: underline; }
+.cv-skill-group-name { font-size: 12px; color: var(--sidebar-fg); margin: 12px 0 6px; font-weight: 600; }
+.cv-chips { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.cv-chip { background: rgba(255, 255, 255, 0.08); color: var(--sidebar-fg); padding: 4px 10px; border-radius: 999px; font-size: 12px; }
+
+.cv-main { padding: 32px 40px; }
+.cv-section-title { font-family: var(--font-display); font-size: 18px; margin: 24px 0 12px; border-bottom: 2px solid var(--rule); padding-bottom: 4px; }
+.cv-main section:first-of-type .cv-section-title { margin-top: 0; }
+
+.cv-experience-item, .cv-education-item { margin-bottom: 20px; page-break-inside: avoid; break-inside: avoid; }
+.cv-role, .cv-degree { margin: 0; font-size: 15px; }
+.cv-company, .cv-school { margin: 2px 0; font-weight: 600; color: #334155; }
+.cv-dates { margin: 0 0 8px; color: #64748b; font-size: 12px; }
+.cv-bullets { margin: 6px 0 0; padding-left: 18px; }
+.cv-bullets li { margin: 4px 0; }
+.cv-notes { margin-top: 6px; color: #334155; font-size: 14px; }
+
+.cv-error-banner { background: #fee2e2; color: #7f1d1d; padding: 16px 20px; border-bottom: 2px solid #ef4444; }
+.cv-error-title { font-weight: 700; margin: 0 0 8px; }
+.cv-error-banner ul { margin: 0; padding-left: 18px; }
+.cv-error-field { color: #991b1b; }
+
+/* ---------- Print ---------- */
+@page { size: A4; margin: 12mm; }
+@media print {
+  body, html { background: white; }
+  .no-print { display: none !important; }
+  .cv-page { min-height: auto; }
+  .cv-sidebar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .cv-section-title, .cv-experience-item header, .cv-education-item header { break-after: avoid; page-break-after: avoid; }
+  a { color: inherit; text-decoration: none; }
+}
