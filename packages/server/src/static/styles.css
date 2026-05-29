@@ -109,6 +109,15 @@ body { font-family: var(--font-body); color: var(--main-fg); background: #f1f5f9
 
 .cv-output-text { white-space: pre-wrap; word-break: break-word; padding: 16px 20px; background: #0f172a; color: #e2e8f0; min-height: 100vh; margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; line-height: 1.5; }
 
+.shell-render-controls { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--rule); }
+.shell-render-controls h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #475569; }
+.shell-render-controls form { display: grid; gap: 8px; margin-bottom: 12px; }
+.shell-render-controls label { font-size: 12px; color: #475569; display: grid; gap: 4px; }
+.shell-render-controls select { padding: 6px 8px; border: 1px solid var(--rule); border-radius: 4px; font-size: 13px; }
+.shell-render-controls button { background: var(--accent); color: white; border: 0; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: 600; }
+.generate-form { border-top: 1px dashed var(--rule); padding-top: 10px; }
+.shell-outdir { font-size: 11px; color: #64748b; word-break: break-all; }
+
 /* ---------- Print ---------- */
 @page { size: A4; margin: 12mm; }
 @media print {

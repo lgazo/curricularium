@@ -1,33 +1,9 @@
 import { Hono } from 'hono';
-import { type Context } from 'hono';
-import { Layout } from '../render/Layout.js';
-import { Shell } from '../render/Shell.js';
-import {
-  activateSource,
-  addSource,
-  removeSource,
-  sourceAvailability,
-} from '../sources.js';
-import { loadConfig } from '../config.js';
+import { activateSource, addSource, removeSource } from '../sources.js';
+import { loadConfig, saveConfig } from '../config.js';
+import { renderShell } from './shell.js';
 
 export const sourceRoutes = new Hono();
-
-async function renderShell(c: Context, errorMessage?: string) {
-  const config = await loadConfig();
-  const availability: Record<string, 'ok' | 'missing' | 'unreadable'> = {};
-  for (const s of config.sources) availability[s.id] = sourceAvailability(s);
-
-  return c.html(
-    <Layout title="Curricularium">
-      <Shell
-        sources={config.sources}
-        activeSourceId={config.activeSourceId}
-        availability={availability}
-        addSourceError={errorMessage}
-      />
-    </Layout>,
-  );
-}
 
 sourceRoutes.post('/sources', async (c) => {
   const form = await c.req.parseBody();
@@ -45,5 +21,7 @@ sourceRoutes.delete('/sources/:id', async (c) => {
 
 sourceRoutes.post('/sources/:id/activate', async (c) => {
   await activateSource(c.req.param('id'));
+  const config = await loadConfig();
+  await saveConfig({ ...config, activeVariantName: null, activeOutputId: null, activeThemeId: null });
   return renderShell(c);
 });
