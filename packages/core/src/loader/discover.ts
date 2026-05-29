@@ -1,8 +1,7 @@
-import { readdir, stat } from 'node:fs/promises';
+import { readdir, stat, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import matter from 'gray-matter';
-import { readFile } from 'node:fs/promises';
 
 export type VariantSummary = { name: string; title: string; path: string };
 
