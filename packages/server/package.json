@@ -13,10 +13,8 @@
     "@curricularium/core": "workspace:*",
     "@hono/node-server": "^1.13.0",
     "chokidar": "^3.6.0",
-    "gray-matter": "^4.0.3",
     "hono": "^4.6.0",
     "htmx.org": "^1.9.12",
-    "marked": "^14.0.0",
     "ulid": "^2.3.0",
     "zod": "^3.23.0"
   },

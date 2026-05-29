@@ -1,51 +1,37 @@
 # @curricularium/server
 
-Local-only web app that renders a directory of markdown files (with frontmatter) into a LinkedIn-spiritual HTML CV. PDF export goes through the browser's print dialog.
+Local-only web app that wraps `@curricularium/core`. Picks a source (a `publish/` root with one or more variant subfolders), lets you select a variant + output + theme, previews live, and generates artifacts to a configurable output folder.
 
 ## Run
 
 ```bash
 pnpm install
-pnpm vendor:htmx        # one-shot; copies node_modules/htmx.org/dist/htmx.min.js into src/static
-pnpm dev                # starts the server on http://localhost:3000 (override with PORT)
+pnpm vendor:htmx                       # one-shot
+pnpm -F @curricularium/server dev      # localhost:3000
 ```
 
-Open <http://localhost:3000>. Add a source directory in the left aside. The first source becomes active automatically.
+## Source shape
 
-## Source directory shape
+A registered source points at the **`publish/` root** described in `Projects/Curriculum/publish/SPEC.md`. Engine auto-discovers each `<variant>/variant.md` subfolder.
 
-```
-<source>/
-├── profile.md           # required: frontmatter with name, headline, optional photo + contact
-├── about.md             # optional: markdown body
-├── experience/          # optional: one .md per role, frontmatter + bullet body
-├── education/           # optional: one .md per entry
-└── skills.md            # optional: groups[] or items[] in frontmatter
-```
+## Outputs
 
-The schema is provisional and will track the parallel design session.
+- **HTML** (default theme: `linkedin-spiritual`) — live preview, auto-writes on every save.
+- **JSON Resume** — themes: `raw` (resume.json), plus community themes `elegant`, `kendall`, `flat`, `stackoverflow`. Explicit Generate writes to disk.
+- **Europass XML** — theme: `canonical`. Explicit Generate writes to disk.
 
-## Live reload
+## Generate flow
 
-The active source is watched with chokidar. File changes broadcast a `reload` event over SSE (`/events`) and the preview iframe reloads. Debounced 150ms.
+Pick (variant, output, theme), click **Generate**. The server writes `<variantName>-<outputId>[-<themeId>]<ext>` to the configured output folder (default `<sourcePath>/../_out`). Open the file with the **Open file** button (Linux: `xdg-open`).
 
-## PDF
+## Validation policy
 
-Click **Print / Save PDF** in the header. The shell calls `iframe.contentWindow.print()`. Use Chromium-based browsers for best fidelity; "Save as PDF" lives in the print dialog.
+The engine is best-effort: every spec validation issue surfaces as a warning in the banner; only a missing/unparseable `variant.md` blocks render. The author is the gatekeeper for SPEC.md's MUSTs.
 
-Or open `/preview` in its own tab and print there.
+## Test fixture for manual smoke
+
+Register `packages/core/test/fixtures/variants/` as a source. It contains a `minimal` variant exercising every atom type.
 
 ## Trust boundary (v1)
 
-This is a local-only, single-user tool bound to localhost. Markdown source files are owned by the user running the server. Body markdown is rendered to HTML and injected without sanitization, because the source is trusted local content.
-
-If scope ever changes (multi-user, hosting, importing third-party markdown), an HTML sanitizer (e.g., DOMPurify) must be added to the parse pipeline before that change ships.
-
-## Manual smoke test
-
-A fixture lives in `fixtures/sample-cv/`. Add its absolute path as a source from the shell, then:
-
-1. Confirm the preview renders with sidebar (photo placeholder, name, headline, chips) and main column (about, two experience entries in date-desc order, one education entry).
-2. Edit `fixtures/sample-cv/about.md`, save, and confirm the preview reloads within ~200ms.
-3. Click **Print / Save PDF** and verify the print dialog shows the CV (sidebar still dark).
-4. Break `fixtures/sample-cv/profile.md` (remove the `name` field, save) and confirm an inline error banner appears in the preview.
+Local-only, single-user, bound to localhost. Markdown source files are owned by the user. Body markdown rendered to HTML without sanitization. If scope ever grows, add a sanitizer before that change ships.
