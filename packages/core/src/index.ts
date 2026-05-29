@@ -1,1 +1,11 @@
-export const VERSION = '0.0.0';
+import './outputs/index.js';
+export { discoverVariants } from './loader/discover.js';
+export type { VariantSummary } from './loader/discover.js';
+export { loadVariant } from './loader/index.js';
+export type { LoadResult } from './loader/index.js';
+export { render, UnknownOutput, UnknownTheme } from './render.js';
+export type { RenderArgs, RenderResult } from './render.js';
+export { listOutputs, findOutput, findTheme } from './outputs/registry.js';
+export type { OutputDef, ThemeDef, ThemeRenderResult } from './outputs/registry.js';
+export type { LoadWarning, SpecCV, VariantManifest, SectionType, WarningCategory } from './spec/model.js';
+export { SECTION_HEADINGS, DEFAULT_SECTION_ORDER, formatDateMMYYYY, summaryHeading } from './spec/canonical.js';
