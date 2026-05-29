@@ -101,6 +101,12 @@ body { font-family: var(--font-body); color: var(--main-fg); background: #f1f5f9
 .cv-error-banner ul { margin: 0; padding-left: 18px; }
 .cv-error-field { color: #991b1b; }
 
+.cv-warnings-banner { background: #fef3c7; color: #78350f; padding: 12px 20px; border-bottom: 2px solid #f59e0b; }
+.cv-warnings-banner summary { font-weight: 700; cursor: pointer; }
+.cv-warnings-banner ul { margin: 8px 0 0; padding-left: 18px; }
+.cv-warn { display: inline-block; font-size: 11px; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.08); }
+.cv-warn-field { color: #92400e; }
+
 /* ---------- Print ---------- */
 @page { size: A4; margin: 12mm; }
 @media print {
