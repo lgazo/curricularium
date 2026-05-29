@@ -71,11 +71,13 @@ export function specCvToJsonResume(cv: SpecCV): JsonResume {
       phone: cv.personal.phone ?? undefined,
       summary: cv.identity.about?.body.trim() || undefined,
       location: { city, countryCode: country },
-      profiles: cv.personal.profiles.map((p) => ({
-        network: p.network,
-        url: p.url,
-        username: p.username ?? undefined,
-      })),
+      profiles: cv.personal.profiles.length
+        ? cv.personal.profiles.map((p) => ({
+            network: p.network,
+            url: p.url,
+            username: p.username ?? undefined,
+          }))
+        : undefined,
     };
   }
 
@@ -149,7 +151,7 @@ export function specCvToJsonResume(cv: SpecCV): JsonResume {
     out.skills = cv.skills.groups.map((g) => ({
       name: g.name,
       level: g.level ?? undefined,
-      keywords: g.items,
+      keywords: g.items.length ? g.items : undefined,
     }));
   }
 
