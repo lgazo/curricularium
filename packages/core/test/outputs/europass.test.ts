@@ -76,7 +76,8 @@ describe('europass canonical theme', () => {
     const { bytes } = await t.render(cv(), {});
     const xml = new TextDecoder().decode(bytes);
     expect(xml).toContain('<Identification>');
-    expect(xml).toContain('Jane Doe');
+    expect(xml).toContain('Jane');
+    expect(xml).toContain('Doe');
     expect(xml).toContain('<Headline>');
     expect(xml).toContain('CTO headline');
     expect(xml).toContain('<PersonalDescription>');

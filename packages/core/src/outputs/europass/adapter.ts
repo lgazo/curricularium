@@ -19,8 +19,7 @@ export function buildEuropassXml(cv: SpecCV): string {
 
   if (cv.personal) {
     lines.push('  <Identification>');
-    const nameParts = cv.personal.fullName.split(' ');
-    lines.push(`    <PersonName><FullName>${esc(cv.personal.fullName)}</FullName><FirstName>${esc(nameParts[0] ?? '')}</FirstName><Surname>${esc(nameParts.slice(1).join(' '))}</Surname></PersonName>`);
+    lines.push(`    <PersonName><FirstName>${esc(cv.personal.fullName.split(' ')[0] ?? '')}</FirstName><Surname>${esc(cv.personal.fullName.split(' ').slice(1).join(' '))}</Surname></PersonName>`);
     lines.push('    <ContactInfo>');
     const [city, country] = splitLoc(cv.personal.location);
     lines.push(`      <Address><Contact><AddressLine>${esc(city)}</AddressLine><Country><Label>${esc(country)}</Label></Country></Contact></Address>`);
