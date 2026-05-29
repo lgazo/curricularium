@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { join } from 'node:path';
+import { join, resolve, sep } from 'node:path';
 import { Layout } from '../render/Layout.js';
 import { WarningsBanner } from '../render/WarningsBanner.js';
 import { getActiveSource, sourceAvailability } from '../sources.js';
@@ -38,7 +38,25 @@ previewRoutes.get('/preview', async (c) => {
     );
   }
 
-  const variantRoot = join(source.path, variant);
+  if (!/^[A-Za-z0-9._-]+$/.test(variant) || variant === '.' || variant === '..') {
+    return c.html(
+      <Layout title="Preview" sseClient>
+        <div class="cv-error-banner">Forbidden variant name.</div>
+      </Layout>,
+      400,
+    );
+  }
+
+  const variantRoot = resolve(join(source.path, variant));
+  const sourceRoot = resolve(source.path);
+  if (!variantRoot.startsWith(sourceRoot + sep) && variantRoot !== sourceRoot) {
+    return c.html(
+      <Layout title="Preview" sseClient>
+        <div class="cv-error-banner">Forbidden variant path.</div>
+      </Layout>,
+      400,
+    );
+  }
   const lr = await loadVariant(variantRoot);
   if (!lr.ok) {
     return c.html(
