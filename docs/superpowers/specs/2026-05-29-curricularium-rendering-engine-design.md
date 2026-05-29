@@ -99,7 +99,7 @@ packages/
 - Delete: `packages/server/src/model.ts`, `packages/server/src/parse/{about,education,experience,markdown,profile,skills,index}.ts`.
 - Move + reshape: `packages/server/src/render/{CV,Sidebar,Main,ExperienceItem,EducationItem}.tsx` → `packages/core/src/outputs/html/themes/linkedin-spiritual/`. The JSX consumes `SpecCV`.
 - Keep: `packages/server/src/render/{Layout,Shell,ErrorBanner→WarningsBanner}.tsx`.
-- Replace: `packages/server/fixtures/sample-cv/` → a SPEC-compliant `publish/` fixture with two minimal variants.
+- Delete: `packages/server/fixtures/sample-cv/`. The SPEC-compliant fixture lives at `packages/core/test/fixtures/publish/` (used by both engine tests and the server manual smoke test, which registers the fixture path as a source).
 
 ### Tech choices
 
@@ -345,10 +345,10 @@ type RenderResult = {
 2. Glob `**/*.md` under the variant root (skip dotfiles, skip `variant.md`).
 3. Per atom file:
    - `gray-matter` → `{ frontmatter, body }`.
-   - Validate frontmatter against the per-`type:` Zod schema. Errors collected as warnings; atom kept if minimally usable (`name` + `type` present); fully unusable atoms skipped with a warning.
+   - Key normalization: kebab → camelCase; `present` lowercased; dates stay as strings.
+   - Validate frontmatter against the per-`type:` Zod schema. On failure: atom is dropped from the model (does not enter any section array); every schema issue is surfaced as a `schema`-category warning naming the file. The typed model is therefore always sound.
    - Visibility filter: atom dropped if `visibility !== "public"` (logged as `visibility` warning).
    - Body sanitize: strip HTML comments.
-   - Key normalization: kebab → camelCase; `present` lowercased; dates stay as strings.
 4. Partition by `type:`. Folder is ignored. Single-entity types (`skill`, `language`, `personal`) accept flat file or folder; multiple files of these types → first kept, others warned (`multi-singleton`).
 5. Pair `identity` atoms by `subtype:`. Missing pieces are warnings, not failures.
 6. Sort each section (sort key, then `order` asc as tiebreaker):
@@ -412,7 +412,7 @@ Filename suggestion: `<variantName>-<outputId>[-<themeId>]<filenameExt>`. Theme 
   - `skills` groups → `skills[]` (`name`, `level`, `keywords: items`).
   - `languages.languages[]` → `languages[]` (`language`, `fluency`).
   - `community[]` → `volunteer[]`.
-  - `openSource[]` → `projects[]` by default; when `cv.variant.collapseOpenSource === false`, additionally emitted as a custom `openSource[]` extension array (harmless to standard consumers).
+  - `openSource[]` → custom `openSource[]` extension array by default (`collapseOpenSource === false`, separate **Open Source** section semantic; standard consumers ignore the extension). When `collapseOpenSource === true`, `openSource[]` is emitted in `projects[]` instead and the extension array is omitted.
   - `awards[]` → `awards[]`.
   - `publications[]` → `publications[]`.
 
