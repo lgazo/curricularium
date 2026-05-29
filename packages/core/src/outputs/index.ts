@@ -1,6 +1,7 @@
 import { registerOutput } from './registry.js';
 import { rawTheme } from './jsonresume/themes/raw.js';
 import { communityThemes } from './jsonresume/themes/community.js';
+import { canonicalTheme } from './europass/themes/canonical.js';
 
 registerOutput({
   id: 'html',
@@ -28,12 +29,6 @@ registerOutput({
   id: 'europass',
   label: 'Europass XML',
   autoWriteOnRender: false,
-  themes: [{
-    id: 'canonical',
-    label: 'Canonical Europass XML',
-    contentType: 'application/xml',
-    filenameExt: '.xml',
-    render: async () => ({ bytes: new Uint8Array(), warnings: [] }),
-  }],
+  themes: [canonicalTheme],
   defaultThemeId: 'canonical',
 });
