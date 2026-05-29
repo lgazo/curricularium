@@ -1,4 +1,5 @@
 import { registerOutput } from './registry.js';
+import { rawTheme } from './jsonresume/themes/raw.js';
 
 registerOutput({
   id: 'html',
@@ -18,13 +19,7 @@ registerOutput({
   id: 'jsonresume',
   label: 'JSON Resume',
   autoWriteOnRender: false,
-  themes: [{
-    id: 'raw',
-    label: 'Raw resume.json',
-    contentType: 'application/json',
-    filenameExt: '.json',
-    render: async () => ({ bytes: new Uint8Array(), warnings: [] }),
-  }],
+  themes: [rawTheme],
   defaultThemeId: 'raw',
 });
 
