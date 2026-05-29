@@ -34,9 +34,12 @@ generateRoutes.post('/generate', async (c) => {
   } catch (err) {
     return c.html(<span class="generate-err">render failed: {(err as Error).message}</span>);
   }
-  const outDir = active.outputDir ?? defaultOutputDir(active.path);
+  const outDir = resolve(active.outputDir ?? defaultOutputDir(active.path));
+  const outPath = resolve(join(outDir, rr.filename));
+  if (!outPath.startsWith(outDir + sep) && outPath !== outDir) {
+    return c.html(<span class="generate-err">forbidden output filename</span>);
+  }
   await mkdir(outDir, { recursive: true });
-  const outPath = join(outDir, rr.filename);
   await writeFile(outPath, rr.bytes);
   return c.html(
     <span>

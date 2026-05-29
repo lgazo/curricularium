@@ -79,12 +79,16 @@ export function buildEuropassXml(cv: SpecCV): string {
     lines.push('  </Education>');
   }
 
-  if (cv.skills && cv.skills.groups.length > 0) {
+  const hasSkills = cv.skills && cv.skills.groups.length > 0;
+  const hasLanguages = cv.languages && cv.languages.languages.length > 0;
+  if (hasSkills || hasLanguages) {
     const buckets: Record<EuropassBucket, string[]> = {
       JobRelated: [], Digital: [], Communication: [], Organisational: [],
     };
-    for (const g of cv.skills.groups) {
-      buckets[resolveEuropassBucket(g)].push(`${g.name}: ${g.items.join(', ')}`);
+    if (cv.skills) {
+      for (const g of cv.skills.groups) {
+        buckets[resolveEuropassBucket(g)].push(`${g.name}: ${g.items.join(', ')}`);
+      }
     }
     lines.push('  <Skills>');
     for (const bucket of ['JobRelated', 'Digital', 'Communication', 'Organisational'] as EuropassBucket[]) {

@@ -44,8 +44,15 @@ export function startWatching(variantRoot: string): void {
             const themeId = (cfg.activeOutputId === o.id ? cfg.activeThemeId : null) ?? o.defaultThemeId;
             try {
               const rr = await render({ cv: result.cv, outputId: o.id, themeId });
-              await mkdir(outDir, { recursive: true });
-              await writeFile(join(outDir, rr.filename), rr.bytes);
+              const { resolve, sep } = await import('node:path');
+              const outDirAbs = resolve(outDir);
+              const outPath = resolve(join(outDirAbs, rr.filename));
+              if (!outPath.startsWith(outDirAbs + sep) && outPath !== outDirAbs) {
+                console.error('[autowrite]', o.id, 'forbidden output filename:', rr.filename);
+                continue;
+              }
+              await mkdir(outDirAbs, { recursive: true });
+              await writeFile(outPath, rr.bytes);
             } catch (err) {
               console.error('[autowrite]', o.id, (err as Error).message);
             }
