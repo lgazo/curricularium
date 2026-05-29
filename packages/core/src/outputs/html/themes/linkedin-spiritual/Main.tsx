@@ -30,14 +30,24 @@ export const Main: FC<{ cv: SpecCV }> = ({ cv }) => {
               </section>
             );
           case 'project': {
-            const projects = cv.variant.collapseOpenSource
-              ? [...cv.projects]
-              : cv.projects;
-            if (projects.length === 0) return null;
+            const hasProjects = cv.projects.length > 0;
+            const collapseOS = cv.variant.collapseOpenSource && cv.openSource.length > 0;
+            if (!hasProjects && !collapseOS) return null;
             return (
               <section class="cv-projects">
                 <h2 class="cv-section-title">{SECTION_HEADINGS['project']}</h2>
-                {projects.map((e) => <ProjectItem entry={e} />)}
+                {cv.projects.map((e) => <ProjectItem entry={e} />)}
+                {collapseOS
+                  ? cv.openSource.map((o) => (
+                      <article class="cv-experience-item">
+                        <header>
+                          <h3 class="cv-role">{o.title}</h3>
+                          <p class="cv-company"><a href={o.repoUrl}>{o.repoUrl}</a> · {o.role}</p>
+                        </header>
+                        <div dangerouslySetInnerHTML={{ __html: renderMarkdown(o.body) }} />
+                      </article>
+                    ))
+                  : null}
               </section>
             );
           }
