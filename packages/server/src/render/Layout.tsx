@@ -39,7 +39,8 @@ es.addEventListener('warnings', (e) => {
   } catch {}
 });
 es.addEventListener('parse-error', (e) => {
-  const data = JSON.parse(e.data || '{}');
+  let data;
+  try { data = JSON.parse(e.data || '{}'); } catch { return; }
   let banner = document.getElementById('parse-error-banner');
   if (!banner) {
     banner = document.createElement('div');
