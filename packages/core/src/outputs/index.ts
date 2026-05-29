@@ -1,5 +1,6 @@
 import { registerOutput } from './registry.js';
 import { rawTheme } from './jsonresume/themes/raw.js';
+import { communityThemes } from './jsonresume/themes/community.js';
 
 registerOutput({
   id: 'html',
@@ -19,7 +20,7 @@ registerOutput({
   id: 'jsonresume',
   label: 'JSON Resume',
   autoWriteOnRender: false,
-  themes: [rawTheme],
+  themes: [rawTheme, ...communityThemes],
   defaultThemeId: 'raw',
 });
 
