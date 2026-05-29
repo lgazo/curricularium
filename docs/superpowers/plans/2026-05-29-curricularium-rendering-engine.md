@@ -45,9 +45,9 @@
     "marked": "^14.0.0",
     "zod": "^3.23.0",
     "jsonresume-theme-elegant": "^1.16.0",
-    "jsonresume-theme-kendall": "^0.1.2",
-    "jsonresume-theme-flat": "^1.0.0",
-    "jsonresume-theme-stackoverflow": "^1.5.0"
+    "jsonresume-theme-kendall": "^0.2.0",
+    "jsonresume-theme-flat": "^0.3.7",
+    "jsonresume-theme-stackoverflow": "^3.3.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
