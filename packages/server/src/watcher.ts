@@ -26,6 +26,32 @@ export function startWatching(variantRoot: string): void {
       if (!activePath) return;
       const result = await loadVariant(activePath);
       if (result.ok) {
+        // auto-write outputs flagged autoWriteOnRender
+        const { loadConfig } = await import('./config.js');
+        const { getActiveSource } = await import('./sources.js');
+        const { listOutputs, render } = await import('@curricularium/core');
+        const { mkdir, writeFile } = await import('node:fs/promises');
+        const { join } = await import('node:path');
+        const { defaultOutputDir } = await import('./config.js');
+
+        const cfg = await loadConfig();
+        const src = await getActiveSource();
+        if (src) {
+          const outDir = src.outputDir ?? defaultOutputDir(src.path);
+          for (const o of listOutputs()) {
+            const isOn = (src.autoWrite as Record<string, boolean>)[o.id] === true && o.autoWriteOnRender;
+            if (!isOn) continue;
+            const themeId = (cfg.activeOutputId === o.id ? cfg.activeThemeId : null) ?? o.defaultThemeId;
+            try {
+              const rr = await render({ cv: result.cv, outputId: o.id, themeId });
+              await mkdir(outDir, { recursive: true });
+              await writeFile(join(outDir, rr.filename), rr.bytes);
+            } catch (err) {
+              console.error('[autowrite]', o.id, (err as Error).message);
+            }
+          }
+        }
+
         broadcast({
           event: 'reload',
           data: activeIdentity ?? { variant: '', output: '', theme: '' },
