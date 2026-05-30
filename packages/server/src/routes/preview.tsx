@@ -1,15 +1,16 @@
 import { Hono } from 'hono';
+import type { Context } from 'hono';
 import { join, resolve, sep } from 'node:path';
 import { Layout } from '../render/Layout.js';
 import { sseClientScriptTag } from '../render/sseClient.js';
 import { getActiveSource, sourceAvailability } from '../sources.js';
 import { DEFAULT_PRINT_CONFIG, loadConfig, type PrintConfig } from '../config.js';
-import { buildPrintCss } from '../render/printCss.js';
+import { buildPrintCss, unwrapPrintMedia } from '../render/printCss.js';
 import { loadVariant, render } from '@curricularium/core';
 
 export const previewRoutes = new Hono();
 
-previewRoutes.get('/preview', async (c) => {
+async function handlePreview(c: Context, mode: 'screen' | 'print') {
   const source = await getActiveSource();
   const config = await loadConfig();
   if (!source) {
@@ -81,9 +82,6 @@ previewRoutes.get('/preview', async (c) => {
     );
   }
 
-  // HTML output: preserve the theme's full document (its own head + styles),
-  // inject only the SSE client for live reload. No warnings banner — those
-  // live in the shell sidebar so they stay out of the preview and print.
   if (rr.contentType.startsWith('text/html')) {
     if (rr.bytes.length === 0) {
       return c.html(
@@ -106,7 +104,7 @@ previewRoutes.get('/preview', async (c) => {
       );
     }
     const themeHtml = new TextDecoder().decode(rr.bytes);
-    return c.html(injectPreviewChrome(themeHtml, config.print ?? DEFAULT_PRINT_CONFIG));
+    return c.html(injectPreviewChrome(themeHtml, config.print ?? DEFAULT_PRINT_CONFIG, mode));
   }
 
   // JSON / XML: syntax-highlighted pre
@@ -116,16 +114,29 @@ previewRoutes.get('/preview', async (c) => {
       <pre class="cv-output-text">{text}</pre>
     </Layout>,
   );
-});
+}
 
-function injectPreviewChrome(themeHtml: string, print: PrintConfig): string {
+previewRoutes.get('/preview', (c) => handlePreview(c, 'print'));
+previewRoutes.get('/print-preview', (c) => handlePreview(c, 'screen'));
+
+function injectPreviewChrome(
+  themeHtml: string,
+  print: PrintConfig,
+  mode: 'screen' | 'print',
+): string {
   const sse = sseClientScriptTag();
-  const printCss = buildPrintCss(print);
-  const hasBody = /<body[^>]*>/i.test(themeHtml) && /<\/body>/i.test(themeHtml);
-  if (!hasBody) {
-    return `<!doctype html><html><head><meta charset="utf-8">${printCss}</head><body>${themeHtml}${sse}</body></html>`;
-  }
+  const printCss = buildPrintCss(print, { mode });
   let out = themeHtml;
+  if (mode === 'screen') {
+    out = out.replace(
+      /<style\b[^>]*>([\s\S]*?)<\/style>/gi,
+      (_m, css: string) => `<style>${unwrapPrintMedia(css)}</style>`,
+    );
+  }
+  const hasBody = /<body[^>]*>/i.test(out) && /<\/body>/i.test(out);
+  if (!hasBody) {
+    return `<!doctype html><html><head><meta charset="utf-8">${printCss}</head><body>${out}${sse}</body></html>`;
+  }
   if (printCss) {
     if (/<\/head>/i.test(out)) {
       out = out.replace(/<\/head>/i, `${printCss}</head>`);

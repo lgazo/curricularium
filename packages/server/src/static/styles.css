@@ -29,9 +29,18 @@ body { font-family: var(--font-body); color: var(--main-fg); background: #f1f5f9
   padding: 12px 20px; background: #0f172a; color: #e2e8f0;
 }
 .shell-title { font-size: 18px; margin: 0; }
+.shell-header-actions { display: flex; gap: 8px; align-items: center; }
 .shell-print {
   background: var(--accent); color: white; border: 0; padding: 8px 14px;
   border-radius: 6px; cursor: pointer; font-weight: 600;
+  text-decoration: none; display: inline-block;
+}
+.shell-print--secondary {
+  background: transparent; color: var(--accent);
+  border: 1px solid var(--accent);
+}
+.shell-print--secondary.shell-print--active {
+  background: var(--accent); color: white;
 }
 .shell-aside { grid-area: aside; background: #f8fafc; border-right: 1px solid var(--rule); padding: 20px; overflow-y: auto; overflow-x: hidden; min-width: 0; }
 .shell-aside code, .shell-aside input, .shell-aside select, .shell-aside button { max-width: 100%; }
@@ -142,6 +151,8 @@ body { font-family: var(--font-body); color: var(--main-fg); background: #f1f5f9
 .shell-print-config-actions button { background: var(--accent); color: white; border: 0; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; flex: 1; }
 .shell-print-config-reset { background: #64748b !important; }
 .shell-print-master { padding: 8px 10px; background: #f1f5f9; border: 1px solid var(--rule); border-radius: 4px; }
+.shell-print-hint { display: block; font-size: 11px; color: #64748b; font-weight: normal; }
+.shell-print-hint code { background: #e2e8f0; padding: 0 4px; border-radius: 3px; }
 .shell-print-master strong { font-size: 13px; }
 
 /* ---------- Print ---------- */

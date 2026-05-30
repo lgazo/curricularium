@@ -82,6 +82,15 @@ const PrintConfigSection: FC<{ print: PrintConfig }> = ({ print }) => (
         <label>Margin (mm)
           <input type="number" name="marginMm" min="0" max="50" step="1" value={String(print.marginMm)} />
         </label>
+        <label>Body padding (mm, 0 = off)
+          <input type="number" name="bodyPaddingMm" min="0" max="50" step="1" value={String(print.bodyPaddingMm)} />
+        </label>
+        <label>Body font size (px, 0 = theme default)
+          <input type="number" name="bodyFontPx" min="0" max="48" step="1" value={String(print.bodyFontPx)} />
+        </label>
+        <label>Heading scale (%, 100 = theme default)
+          <input type="number" name="headingScalePct" min="50" max="200" step="5" value={String(print.headingScalePct)} />
+        </label>
       </fieldset>
 
       <fieldset>
@@ -156,7 +165,11 @@ const PrintConfigSection: FC<{ print: PrintConfig }> = ({ print }) => (
           Hide link URLs (some themes append them)
         </label>
         <label>Custom CSS
-          <textarea name="customCss" rows={4} placeholder="@media print { ... }">{print.customCss}</textarea>
+          <small class="shell-print-hint">
+            Bare rules only — server wraps them in <code>@media print</code> automatically.
+            Example: <code>body &#123; background: red &#125;</code>
+          </small>
+          <textarea name="customCss" rows={4} placeholder="body { background: red }">{print.customCss}</textarea>
         </label>
       </fieldset>
 
@@ -185,13 +198,26 @@ export const Shell: FC<Props> = (p) => {
     <div class="shell">
       <header class="shell-header no-print">
         <h1 class="shell-title">Curricularium</h1>
-        <button
-          type="button"
-          class="shell-print"
-          onclick="window.printPreviewFrame && window.printPreviewFrame()"
-        >
-          Print / Save PDF
-        </button>
+        <div class="shell-header-actions">
+          {p.activeVariantName ? (
+            <button
+              type="button"
+              id="print-mode-toggle"
+              class="shell-print shell-print--secondary"
+              aria-pressed="false"
+              onclick="window.togglePrintMode && window.togglePrintMode()"
+            >
+              Print preview: off
+            </button>
+          ) : null}
+          <button
+            type="button"
+            class="shell-print"
+            onclick="window.printPreviewFrame && window.printPreviewFrame()"
+          >
+            Print / Save PDF
+          </button>
+        </div>
       </header>
 
       <aside class="shell-aside no-print">
@@ -292,8 +318,33 @@ export const Shell: FC<Props> = (p) => {
 
 const SHELL_PRINT_SCRIPT = `
 (function(){
+  var KEY = 'shell-print-mode';
+  function frame(){ return document.getElementById('preview-frame'); }
+  function btn(){ return document.getElementById('print-mode-toggle'); }
+  function isOn(){ return localStorage.getItem(KEY) === '1'; }
+  function applyFrameSrc(on){
+    var f = frame(); if (!f) return;
+    var src = f.getAttribute('src') || '';
+    if (!src) return;
+    var path = on ? '/print-preview' : '/preview';
+    var qs = src.indexOf('?'); var q = qs >= 0 ? src.substring(qs) : '';
+    var next = path + q;
+    if (f.getAttribute('src') !== next) f.setAttribute('src', next);
+  }
+  function applyBtn(on){
+    var b = btn(); if (!b) return;
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.textContent = 'Print preview: ' + (on ? 'on' : 'off');
+    b.classList.toggle('shell-print--active', on);
+  }
+  function sync(){ var on = isOn(); applyBtn(on); applyFrameSrc(on); }
+  window.togglePrintMode = function(){
+    var on = !isOn();
+    localStorage.setItem(KEY, on ? '1' : '0');
+    sync();
+  };
   function doPrint(){
-    var f = document.getElementById('preview-frame');
+    var f = frame();
     if (!f || !f.contentWindow) { window.print(); return; }
     try { f.contentWindow.focus(); f.contentWindow.print(); }
     catch (_) { window.print(); }
@@ -306,6 +357,8 @@ const SHELL_PRINT_SCRIPT = `
       doPrint();
     }
   });
+  sync();
+  document.body.addEventListener('htmx:afterSwap', sync);
 })();
 `;
 

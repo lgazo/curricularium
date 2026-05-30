@@ -7,6 +7,7 @@ import { DEFAULT_PRINT_CONFIG, PrintConfigSchema, loadConfig, defaultOutputDir, 
 import { sourceAvailability, getActiveSource } from '../sources.js';
 import { discoverVariants, listOutputs, loadVariant } from '@curricularium/core';
 import type { LoadWarning } from '@curricularium/core';
+import { broadcast } from '../sse.js';
 
 export const shellRoutes = new Hono();
 
@@ -115,6 +116,14 @@ shellRoutes.post('/print-config', async (c) => {
 
   if (form['reset'] != null) {
     await saveConfig({ ...config, print: DEFAULT_PRINT_CONFIG });
+    broadcast({
+      event: 'reload',
+      data: {
+        variant: config.activeVariantName ?? '',
+        output: config.activeOutputId ?? '',
+        theme: config.activeThemeId ?? '',
+      },
+    });
     return renderShell(c);
   }
 
@@ -135,6 +144,9 @@ shellRoutes.post('/print-config', async (c) => {
     enabled: boolFlag('enabled'),
     pageSize: strOr('pageSize', current.pageSize),
     marginMm: numOr('marginMm', current.marginMm),
+    bodyPaddingMm: numOr('bodyPaddingMm', current.bodyPaddingMm),
+    bodyFontPx: numOr('bodyFontPx', current.bodyFontPx),
+    headingScalePct: numOr('headingScalePct', current.headingScalePct),
     useEntryGrouping: boolFlag('useEntryGrouping'),
     semanticEntrySelectors: strOr('semanticEntrySelectors', current.semanticEntrySelectors),
     useDirectHeadingEntries: boolFlag('useDirectHeadingEntries'),
@@ -155,6 +167,14 @@ shellRoutes.post('/print-config', async (c) => {
   if (!parsed.success) return c.text('invalid print config', 400);
 
   await saveConfig({ ...config, print: parsed.data });
+  broadcast({
+    event: 'reload',
+    data: {
+      variant: config.activeVariantName ?? '',
+      output: config.activeOutputId ?? '',
+      theme: config.activeThemeId ?? '',
+    },
+  });
   return renderShell(c);
 });
 
