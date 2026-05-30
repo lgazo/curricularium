@@ -1,0 +1,15 @@
+salary
+compensation
+$
+USD
+EUR/year
+GBP/year
+annual package
+NDA
+confidential
+AWS Bedrock
+LangChain
+LangGraph
+Anthropic SDK
+OpenAI SDK
+Bedrock
