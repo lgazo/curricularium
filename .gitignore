@@ -10,3 +10,7 @@ build/
 
 # brainstorming companion artifacts
 .superpowers/
+
+.playwright-cli/
+.roam/
+
