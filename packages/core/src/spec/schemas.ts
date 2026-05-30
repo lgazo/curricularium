@@ -173,6 +173,7 @@ export const PersonalSchema = withBase({
   phone: z.string().nullable().default(null),
   location: z.string().min(1),
   profiles: z.array(ProfileSchema).default([]),
+  photo: z.string().nullable().default(null),
   body: z.string().default(''),
 });
 

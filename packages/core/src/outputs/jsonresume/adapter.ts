@@ -5,6 +5,7 @@ export type JsonResume = {
   basics?: {
     name?: string;
     label?: string;
+    image?: string;
     email?: string;
     phone?: string;
     url?: string;
@@ -59,14 +60,18 @@ type PublicationEntry = { name: string; publisher?: string; releaseDate?: string
 type SkillEntry = { name: string; level?: string; keywords?: string[] };
 type LanguageEntry = { language: string; fluency?: string };
 
-export function specCvToJsonResume(cv: SpecCV): JsonResume {
+export type JsonResumeOptions = { photoUrl?: string | null };
+
+export function specCvToJsonResume(cv: SpecCV, opts: JsonResumeOptions = {}): JsonResume {
   const out: JsonResume = {};
 
   if (cv.personal) {
     const [city, country] = splitLocation(cv.personal.location);
+    const image = opts.photoUrl ?? cv.personal.photo ?? undefined;
     out.basics = {
       name: cv.personal.fullName,
       label: cv.identity.headline?.body.trim() || undefined,
+      image: image || undefined,
       email: cv.personal.email,
       phone: cv.personal.phone ?? undefined,
       summary: cv.identity.about?.body.trim() || undefined,

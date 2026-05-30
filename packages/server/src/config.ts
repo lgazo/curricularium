@@ -20,17 +20,45 @@ export const SourceSchema = z.object({
   addedAt: z.string(),
 });
 
+export const PageSizeSchema = z.enum(['A4', 'A3', 'A5', 'Letter', 'Legal']);
+
+export const PrintConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  pageSize: PageSizeSchema.default('A4'),
+  marginMm: z.number().min(0).max(50).default(12),
+  useEntryGrouping: z.boolean().default(true),
+  semanticEntrySelectors: z.string().default('article, li'),
+  useDirectHeadingEntries: z.boolean().default(true),
+  useNestedHeadingEntries: z.boolean().default(true),
+  entryHeadingSelectors: z.string().default('h3, h4'),
+  keepHeadingsWithContent: z.boolean().default(true),
+  headingSelectors: z.string().default('h1, h2, h3, h4'),
+  keepHeadingNextBlock: z.boolean().default(true),
+  orphans: z.number().int().min(1).max(10).default(3),
+  widows: z.number().int().min(1).max(10).default(3),
+  forcePageBreakBeforeTopSections: z.boolean().default(false),
+  topSectionSelector: z.string().default('body > section, main > section'),
+  printBackgrounds: z.boolean().default(true),
+  hideLinkUrls: z.boolean().default(false),
+  extraAvoidSelectors: z.string().default(''),
+  customCss: z.string().default(''),
+}).default({});
+
 export const ConfigSchema = z.object({
   sources: z.array(SourceSchema).default([]),
   activeSourceId: z.string().nullable().default(null),
   activeVariantName: z.string().nullable().default(null),
   activeOutputId: z.string().nullable().default(null),
   activeThemeId: z.string().nullable().default(null),
+  print: PrintConfigSchema,
 });
 
 export type Source = z.infer<typeof SourceSchema>;
 export type AutoWrite = z.infer<typeof AutoWriteSchema>;
+export type PrintConfig = z.infer<typeof PrintConfigSchema>;
 export type Config = z.infer<typeof ConfigSchema>;
+
+export const DEFAULT_PRINT_CONFIG: PrintConfig = PrintConfigSchema.parse({});
 
 export function configFilePath(): string {
   const xdg = process.env.XDG_CONFIG_HOME;
@@ -41,6 +69,7 @@ export function configFilePath(): string {
 const EMPTY: Config = {
   sources: [], activeSourceId: null, activeVariantName: null,
   activeOutputId: null, activeThemeId: null,
+  print: DEFAULT_PRINT_CONFIG,
 };
 
 export async function loadConfig(): Promise<Config> {

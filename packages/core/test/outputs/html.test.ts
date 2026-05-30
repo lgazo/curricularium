@@ -15,7 +15,7 @@ function cv(): SpecCV {
     personal: {
       type: 'personal', name: 'p', source: null, order: 0, lang: 'en',
       fullName: 'Jane Doe', targetRole: 'CTO', email: 'j@x.com', phone: null,
-      location: 'Bratislava, Slovakia', profiles: [], body: '',
+      location: 'Bratislava, Slovakia', profiles: [], photo: null, body: '',
     },
     identity: {
       headline: { type: 'identity', subtype: 'headline', name: 'h', source: null, order: 0, lang: 'en', body: '0→1 CTO' },

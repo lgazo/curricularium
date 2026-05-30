@@ -2,8 +2,8 @@ import { Hono } from 'hono';
 import type { Context } from 'hono';
 import { join, resolve, sep } from 'node:path';
 import { Layout } from '../render/Layout.js';
-import { Shell } from '../render/Shell.js';
-import { loadConfig, defaultOutputDir, saveConfig } from '../config.js';
+import { Shell, renderThemeOptions } from '../render/Shell.js';
+import { DEFAULT_PRINT_CONFIG, PrintConfigSchema, loadConfig, defaultOutputDir, saveConfig } from '../config.js';
 import { sourceAvailability, getActiveSource } from '../sources.js';
 import { discoverVariants, listOutputs, loadVariant } from '@curricularium/core';
 import type { LoadWarning } from '@curricularium/core';
@@ -49,12 +49,20 @@ async function renderShell(c: Context, addSourceError?: string) {
         activeThemeId={config.activeThemeId}
         outputDir={outputDir}
         warnings={warnings}
+        print={config.print ?? DEFAULT_PRINT_CONFIG}
       />
     </Layout>,
   );
 }
 
 shellRoutes.get('/', (c) => renderShell(c));
+
+shellRoutes.get('/themes', (c) => {
+  const outputId = c.req.query('output') ?? '';
+  const output = listOutputs().find((o) => o.id === outputId);
+  if (!output) return c.html(<></>);
+  return c.html(<>{renderThemeOptions(output.themes, output.defaultThemeId)}</>);
+});
 
 shellRoutes.post('/select', async (c) => {
   const form = await c.req.parseBody();
@@ -98,6 +106,55 @@ shellRoutes.post('/select', async (c) => {
     activeThemeId: nextTheme,
   };
   await saveConfig(next);
+  return renderShell(c);
+});
+
+shellRoutes.post('/print-config', async (c) => {
+  const form = await c.req.parseBody();
+  const config = await loadConfig();
+
+  if (form['reset'] != null) {
+    await saveConfig({ ...config, print: DEFAULT_PRINT_CONFIG });
+    return renderShell(c);
+  }
+
+  const numOr = (key: string, fallback: number): number => {
+    const raw = form[key];
+    if (raw == null) return fallback;
+    const n = Number(String(raw));
+    return Number.isFinite(n) ? n : fallback;
+  };
+  const strOr = (key: string, fallback: string): string => {
+    const raw = form[key];
+    return raw == null ? fallback : String(raw);
+  };
+  const boolFlag = (key: string): boolean => form[key] != null;
+
+  const current = config.print ?? DEFAULT_PRINT_CONFIG;
+  const parsed = PrintConfigSchema.safeParse({
+    enabled: boolFlag('enabled'),
+    pageSize: strOr('pageSize', current.pageSize),
+    marginMm: numOr('marginMm', current.marginMm),
+    useEntryGrouping: boolFlag('useEntryGrouping'),
+    semanticEntrySelectors: strOr('semanticEntrySelectors', current.semanticEntrySelectors),
+    useDirectHeadingEntries: boolFlag('useDirectHeadingEntries'),
+    useNestedHeadingEntries: boolFlag('useNestedHeadingEntries'),
+    entryHeadingSelectors: strOr('entryHeadingSelectors', current.entryHeadingSelectors),
+    keepHeadingsWithContent: boolFlag('keepHeadingsWithContent'),
+    headingSelectors: strOr('headingSelectors', current.headingSelectors),
+    keepHeadingNextBlock: boolFlag('keepHeadingNextBlock'),
+    orphans: numOr('orphans', current.orphans),
+    widows: numOr('widows', current.widows),
+    forcePageBreakBeforeTopSections: boolFlag('forcePageBreakBeforeTopSections'),
+    topSectionSelector: strOr('topSectionSelector', current.topSectionSelector),
+    printBackgrounds: boolFlag('printBackgrounds'),
+    hideLinkUrls: boolFlag('hideLinkUrls'),
+    extraAvoidSelectors: strOr('extraAvoidSelectors', current.extraAvoidSelectors),
+    customCss: strOr('customCss', current.customCss),
+  });
+  if (!parsed.success) return c.text('invalid print config', 400);
+
+  await saveConfig({ ...config, print: parsed.data });
   return renderShell(c);
 });
 

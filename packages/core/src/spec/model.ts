@@ -142,6 +142,7 @@ export type Personal = AtomBase & {
   phone: string | null;
   location: LocationStr;
   profiles: Profile[];
+  photo: string | null;
   body: string;
 };
 

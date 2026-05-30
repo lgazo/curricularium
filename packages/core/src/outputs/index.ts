@@ -1,6 +1,6 @@
 import { registerOutput } from './registry.js';
 import { rawTheme } from './jsonresume/themes/raw.js';
-import { communityThemes } from './jsonresume/themes/community.js';
+import { fallbackCommunityThemes } from './jsonresume/themes/community.js';
 import { canonicalTheme } from './europass/themes/canonical.js';
 import { linkedinSpiritualTheme } from './html/themes/linkedin-spiritual/index.js';
 
@@ -16,7 +16,7 @@ registerOutput({
   id: 'jsonresume',
   label: 'JSON Resume',
   autoWriteOnRender: false,
-  themes: [rawTheme, ...communityThemes],
+  themes: [rawTheme, ...fallbackCommunityThemes],
   defaultThemeId: 'raw',
 });
 

@@ -24,7 +24,7 @@ describe('render entry', () => {
     const r = await render({ cv: lr.cv, outputId: 'europass', themeId: 'canonical' });
     expect(r.contentType).toBe('application/xml');
     expect(r.filename).toBe('minimal-europass.xml');
-    expect(new TextDecoder().decode(r.bytes)).toContain('<EuropassCV');
+    expect(new TextDecoder().decode(r.bytes)).toContain('<SkillsPassport');
   });
 
   it('appends -theme suffix when output has multiple themes', async () => {

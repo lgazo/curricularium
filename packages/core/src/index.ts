@@ -4,6 +4,8 @@ export type { VariantSummary } from './loader/discover.js';
 export { loadVariant } from './loader/index.js';
 export type { LoadResult } from './loader/index.js';
 export { render, UnknownOutput, UnknownTheme } from './render.js';
+export { initJsonResumeThemes } from './outputs/jsonresume/init.js';
+export { isInstalled as isThemePkgInstalled } from './outputs/jsonresume/themes/install.js';
 export type { RenderArgs, RenderResult } from './render.js';
 export { listOutputs, findOutput, findTheme } from './outputs/registry.js';
 export type { OutputDef, ThemeDef, ThemeRenderResult } from './outputs/registry.js';

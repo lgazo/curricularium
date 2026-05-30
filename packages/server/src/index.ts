@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import { serve } from '@hono/node-server';
+import { initJsonResumeThemes } from '@curricularium/core';
 import { buildApp } from './routes/index.js';
 import { getActiveSource } from './sources.js';
 import { loadConfig } from './config.js';
@@ -21,6 +22,10 @@ async function reattachWatcher(): Promise<void> {
   });
   startWatching(join(active.path, config.activeVariantName));
 }
+
+await initJsonResumeThemes().catch((err: unknown) => {
+  console.warn('jsonresume theme discovery failed:', (err as Error).message);
+});
 
 await reattachWatcher();
 

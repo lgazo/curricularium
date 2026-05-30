@@ -3,12 +3,15 @@
 import type { FC } from 'hono/jsx';
 import type { Personal, Skills } from '../../../../spec/model.js';
 
-type Props = { personal: Personal | null; skills: Skills | null; headline: string | null };
+type Props = { personal: Personal | null; skills: Skills | null; headline: string | null; photoUrl: string | null };
 
-export const Sidebar: FC<Props> = ({ personal, skills, headline }) => {
+export const Sidebar: FC<Props> = ({ personal, skills, headline, photoUrl }) => {
   if (!personal) return <aside class="cv-sidebar" />;
   return (
     <aside class="cv-sidebar">
+      {photoUrl ? (
+        <img class="cv-photo" src={photoUrl} alt={personal.fullName} />
+      ) : null}
       <h1 class="cv-name">{personal.fullName}</h1>
       {headline ? <p class="cv-headline">{headline}</p> : null}
       <p class="cv-location">{personal.location}</p>

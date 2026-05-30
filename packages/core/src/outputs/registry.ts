@@ -7,6 +7,10 @@ export type ThemeDef = {
   label: string;
   contentType: string;
   filenameExt: string;
+  /** npm package name when theme is loaded dynamically; absent for built-in themes. */
+  pkg?: string;
+  /** True when the theme is part of the curated favorites set. */
+  favorite?: boolean;
   render: (cv: SpecCV, opts: unknown) => Promise<ThemeRenderResult>;
 };
 

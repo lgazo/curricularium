@@ -16,7 +16,7 @@ function cv(): SpecCV {
     personal: {
       type: 'personal', name: 'p', source: null, order: 0, lang: 'en',
       fullName: 'Jane Doe', targetRole: 'CTO', email: 'j@x.com', phone: '+421000000000',
-      location: 'Bratislava, Slovakia', profiles: [], body: '',
+      location: 'Bratislava, Slovakia', profiles: [], photo: null, body: '',
     },
     identity: {
       headline: { type: 'identity', subtype: 'headline', name: 'h', source: null, order: 0, lang: 'en', body: 'CTO headline' },
@@ -71,17 +71,20 @@ describe('europass bucket resolution', () => {
 });
 
 describe('europass canonical theme', () => {
-  it('renders XML with Identification, Headline, PersonalDescription, WorkExperience', async () => {
+  it('renders SkillsPassport with DocumentInfo, Identification, Headline, WorkExperience', async () => {
     const t = findTheme('europass', 'canonical')!;
     const { bytes } = await t.render(cv(), {});
     const xml = new TextDecoder().decode(bytes);
+    expect(xml).toContain('<SkillsPassport');
+    expect(xml).toContain('<DocumentType>ECV</DocumentType>');
+    expect(xml).toContain('<XSDVersion>V3.4</XSDVersion>');
+    expect(xml).toContain('<LearnerInfo>');
     expect(xml).toContain('<Identification>');
     expect(xml).toContain('Jane');
     expect(xml).toContain('Doe');
     expect(xml).toContain('<Headline>');
     expect(xml).toContain('CTO headline');
-    expect(xml).toContain('<PersonalDescription>');
-    expect(xml).toContain('About text.');
+    expect(xml).toContain('<WorkExperienceList>');
     expect(xml).toContain('<WorkExperience>');
     expect(xml).toContain('<Employer>');
     expect(xml).toContain('Foo Inc');
@@ -96,7 +99,7 @@ describe('europass canonical theme', () => {
     expect(xml).toContain('mentoring');
     expect(xml).toContain('<Communication>');
     expect(xml).toContain('speaking');
-    expect(xml).toContain('<Digital>');
+    expect(xml).toContain('<Computer>');
     expect(xml).toContain('TypeScript');
   });
 

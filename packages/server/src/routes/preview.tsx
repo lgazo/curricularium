@@ -1,9 +1,10 @@
 import { Hono } from 'hono';
 import { join, resolve, sep } from 'node:path';
 import { Layout } from '../render/Layout.js';
-import { WarningsBanner } from '../render/WarningsBanner.js';
+import { sseClientScriptTag } from '../render/sseClient.js';
 import { getActiveSource, sourceAvailability } from '../sources.js';
-import { loadConfig } from '../config.js';
+import { DEFAULT_PRINT_CONFIG, loadConfig, type PrintConfig } from '../config.js';
+import { buildPrintCss } from '../render/printCss.js';
 import { loadVariant, render } from '@curricularium/core';
 
 export const previewRoutes = new Hono();
@@ -75,36 +76,62 @@ previewRoutes.get('/preview', async (c) => {
   } catch (err) {
     return c.html(
       <Layout title="Preview" sseClient>
-        <WarningsBanner warnings={lr.warnings} />
         <div class="cv-error-banner">Render failed: {(err as Error).message}</div>
       </Layout>,
     );
   }
 
-  // HTML output: return raw body (the theme already produced a full document).
+  // HTML output: preserve the theme's full document (its own head + styles),
+  // inject only the SSE client for live reload. No warnings banner — those
+  // live in the shell sidebar so they stay out of the preview and print.
   if (rr.contentType.startsWith('text/html')) {
-    const html = new TextDecoder().decode(rr.bytes);
-    // Inject the SSE client + warnings banner via a small DOM trick:
-    // wrap output in a Layout so it gets the SSE script + banner.
-    return c.html(
-      <Layout title={`${lr.cv.personal?.fullName ?? lr.cv.variant.title} — CV`} sseClient>
-        <WarningsBanner warnings={[...lr.warnings, ...rr.warnings]} />
-        <div dangerouslySetInnerHTML={{ __html: extractBody(html) }} />
-      </Layout>,
-    );
+    if (rr.bytes.length === 0) {
+      return c.html(
+        <Layout title="Theme failed" sseClient>
+          <div class="cv-error-banner">
+            <p class="cv-error-title">
+              Theme "{themeId}" produced no output.
+            </p>
+            {rr.warnings.length > 0 ? (
+              <ul>
+                {rr.warnings.map((w) => (
+                  <li><code>{w.file}</code> — {w.message}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>Render returned empty bytes with no diagnostic. Check server logs.</p>
+            )}
+          </div>
+        </Layout>,
+      );
+    }
+    const themeHtml = new TextDecoder().decode(rr.bytes);
+    return c.html(injectPreviewChrome(themeHtml, config.print ?? DEFAULT_PRINT_CONFIG));
   }
 
   // JSON / XML: syntax-highlighted pre
   const text = new TextDecoder().decode(rr.bytes);
   return c.html(
     <Layout title={`${lr.cv.variant.title} — ${outputId}`} sseClient>
-      <WarningsBanner warnings={[...lr.warnings, ...rr.warnings]} />
       <pre class="cv-output-text">{text}</pre>
     </Layout>,
   );
 });
 
-function extractBody(html: string): string {
-  const m = /<body[^>]*>([\s\S]*)<\/body>/i.exec(html);
-  return m ? m[1]! : html;
+function injectPreviewChrome(themeHtml: string, print: PrintConfig): string {
+  const sse = sseClientScriptTag();
+  const printCss = buildPrintCss(print);
+  const hasBody = /<body[^>]*>/i.test(themeHtml) && /<\/body>/i.test(themeHtml);
+  if (!hasBody) {
+    return `<!doctype html><html><head><meta charset="utf-8">${printCss}</head><body>${themeHtml}${sse}</body></html>`;
+  }
+  let out = themeHtml;
+  if (printCss) {
+    if (/<\/head>/i.test(out)) {
+      out = out.replace(/<\/head>/i, `${printCss}</head>`);
+    } else {
+      out = out.replace(/<body[^>]*>/i, (m) => `${m}${printCss}`);
+    }
+  }
+  return out.replace(/<\/body>/i, `${sse}</body>`);
 }

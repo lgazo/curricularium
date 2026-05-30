@@ -1,5 +1,8 @@
-import type { SkillGroup, SpecCV } from '../../spec/model.js';
+import type { DateLike, SkillGroup, SpecCV } from '../../spec/model.js';
 import { formatDateEuropass, type EuropassDate } from '../../spec/canonical.js';
+import type { PhotoData } from '../../spec/photo.js';
+
+export type EuropassOptions = { photo?: PhotoData | null };
 
 export type EuropassBucket = 'JobRelated' | 'Digital' | 'Communication' | 'Organisational';
 
@@ -12,133 +15,261 @@ export function resolveEuropassBucket(g: SkillGroup): EuropassBucket {
   return 'JobRelated';
 }
 
-export function buildEuropassXml(cv: SpecCV): string {
-  const lines: string[] = [];
-  lines.push('<?xml version="1.0" encoding="UTF-8"?>');
-  lines.push('<EuropassCV xmlns="http://europass.cedefop.europa.eu/Europass" Locale="en">');
+const NS = 'http://europass.cedefop.europa.eu/Europass';
+const XSD_URL = 'http://europass.cedefop.europa.eu/xml/v3.4.0/EuropassSchema.xsd';
 
-  if (cv.personal) {
-    lines.push('  <Identification>');
-    lines.push(`    <PersonName><FirstName>${esc(cv.personal.fullName.split(' ')[0] ?? '')}</FirstName><Surname>${esc(cv.personal.fullName.split(' ').slice(1).join(' '))}</Surname></PersonName>`);
-    lines.push('    <ContactInfo>');
-    const [city, country] = splitLoc(cv.personal.location);
-    lines.push(`      <Address><Contact><AddressLine>${esc(city)}</AddressLine><Country><Label>${esc(country)}</Label></Country></Contact></Address>`);
-    lines.push(`      <Email><Contact>${esc(cv.personal.email)}</Contact></Email>`);
-    if (cv.personal.phone) {
-      lines.push(`      <Telephone><Contact>${esc(cv.personal.phone)}</Contact></Telephone>`);
+export function buildEuropassXml(cv: SpecCV, opts: EuropassOptions = {}): string {
+  const now = new Date().toISOString();
+  const out: string[] = [];
+  out.push('<?xml version="1.0" encoding="UTF-8"?>');
+  out.push(`<SkillsPassport xmlns="${NS}" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="${NS} ${XSD_URL}" locale="en">`);
+
+  out.push('  <DocumentInfo>');
+  out.push('    <DocumentType>ECV</DocumentType>');
+  out.push(`    <CreationDate>${now}</CreationDate>`);
+  out.push(`    <LastUpdateDate>${now}</LastUpdateDate>`);
+  out.push('    <XSDVersion>V3.4</XSDVersion>');
+  out.push('    <Generator>curricularium</Generator>');
+  out.push('  </DocumentInfo>');
+
+  out.push('  <LearnerInfo>');
+
+  if (cv.personal) emitIdentification(out, cv, opts.photo ?? null);
+  if (cv.identity.headline) emitHeadline(out, cv.identity.headline.body);
+  emitWorkExperienceList(out, cv);
+  emitEducationList(out, cv);
+  emitSkills(out, cv);
+  emitAchievementList(out, cv);
+
+  out.push('  </LearnerInfo>');
+  out.push('</SkillsPassport>');
+  return out.join('\n');
+}
+
+function emitIdentification(out: string[], cv: SpecCV, photo: PhotoData | null): void {
+  const p = cv.personal!;
+  out.push('    <Identification>');
+  const parts = p.fullName.split(' ');
+  const first = parts[0] ?? '';
+  const last = parts.slice(1).join(' ');
+  out.push('      <PersonName>');
+  if (first) out.push(`        <FirstName>${esc(first)}</FirstName>`);
+  if (last) out.push(`        <Surname>${esc(last)}</Surname>`);
+  out.push('      </PersonName>');
+
+  if (photo) {
+    out.push('      <Photo>');
+    out.push(`        <MimeType>${esc(photo.mime)}</MimeType>`);
+    out.push(`        <Data>${photo.base64}</Data>`);
+    out.push('      </Photo>');
+  }
+
+  out.push('      <ContactInfo>');
+  const [city, country] = splitLoc(p.location);
+  if (city || country) {
+    out.push('        <Address>');
+    out.push('          <Contact>');
+    if (city) out.push(`            <Municipality>${esc(city)}</Municipality>`);
+    if (country) {
+      out.push('            <Country>');
+      out.push(`              <Label>${esc(country)}</Label>`);
+      out.push('            </Country>');
     }
-    lines.push('    </ContactInfo>');
-    lines.push('  </Identification>');
+    out.push('          </Contact>');
+    out.push('        </Address>');
   }
-
-  if (cv.identity.headline) {
-    lines.push('  <Headline>');
-    lines.push(`    <Description><Label>${esc(cv.identity.headline.body.trim())}</Label></Description>`);
-    lines.push('  </Headline>');
+  if (p.email) {
+    out.push('        <Email>');
+    out.push(`          <Contact>${esc(p.email)}</Contact>`);
+    out.push('        </Email>');
   }
-
-  if (cv.identity.about) {
-    lines.push(`  <PersonalDescription><Label>${esc(cv.identity.about.body.trim())}</Label></PersonalDescription>`);
+  if (p.phone) {
+    out.push('        <TelephoneList>');
+    out.push('          <Telephone>');
+    out.push(`            <Contact>${esc(p.phone)}</Contact>`);
+    out.push('            <Use><Code>mobile</Code><Label>Mobile</Label></Use>');
+    out.push('          </Telephone>');
+    out.push('        </TelephoneList>');
   }
+  if (p.profiles.length > 0) {
+    out.push('        <WebsiteList>');
+    for (const pr of p.profiles) {
+      out.push('          <Website>');
+      out.push(`            <Contact>${esc(pr.url)}</Contact>`);
+      out.push('            <Use><Code>personal</Code><Label>Personal</Label></Use>');
+      out.push('          </Website>');
+    }
+    out.push('        </WebsiteList>');
+  }
+  out.push('      </ContactInfo>');
+  out.push('    </Identification>');
+}
 
+function emitHeadline(out: string[], body: string): void {
+  const t = body.trim();
+  if (!t) return;
+  out.push('    <Headline>');
+  out.push('      <Type><Code>position</Code><Label>Position</Label></Type>');
+  out.push(`      <Description><Label>${esc(t)}</Label></Description>`);
+  out.push('    </Headline>');
+}
+
+type WorkEntry = {
+  periodStart: DateLike;
+  periodEnd: DateLike;
+  position: string;
+  employer: string;
+  body: string;
+  url: string | null;
+};
+
+function collectWorkEntries(cv: SpecCV): WorkEntry[] {
+  const list: WorkEntry[] = [];
   for (const w of cv.workExperience) {
-    lines.push('  <WorkExperience>');
-    lines.push(`    <Period>${periodXml(formatDateEuropass(w.periodStart), formatDateEuropass(w.periodEnd))}</Period>`);
-    lines.push(`    <Position><Label>${esc(w.position)}</Label></Position>`);
-    lines.push(`    <Employer><Name>${esc(w.employer)}</Name></Employer>`);
-    lines.push(`    <Activities><Label>${esc(w.body.trim())}</Label></Activities>`);
-    lines.push('  </WorkExperience>');
+    list.push({ periodStart: w.periodStart, periodEnd: w.periodEnd, position: w.position, employer: w.employer, body: w.body, url: null });
   }
-
   for (const p of cv.projects) {
-    lines.push('  <WorkExperience>');
-    const endDate = p.periodEnd ? formatDateEuropass(p.periodEnd) : ({ current: true } as const);
-    lines.push(`    <Period>${periodXml(formatDateEuropass(p.periodStart), endDate)}</Period>`);
-    lines.push(`    <Position><Label>${esc(p.title)}</Label></Position>`);
-    const employerName = p.client ? `${p.employer} — ${p.client}` : p.employer;
-    if (p.url) {
-      lines.push(`    <Employer><Name>${esc(employerName)}</Name><ContactInfo><Website><Contact>${esc(p.url)}</Contact></Website></ContactInfo></Employer>`);
-    } else {
-      lines.push(`    <Employer><Name>${esc(employerName)}</Name></Employer>`);
-    }
-    if (p.body.trim()) {
-      lines.push(`    <Activities><Label>${esc(p.body.trim())}</Label></Activities>`);
-    }
-    lines.push('  </WorkExperience>');
+    const employer = p.client ? `${p.employer} — ${p.client}` : p.employer;
+    list.push({ periodStart: p.periodStart, periodEnd: p.periodEnd ?? ('present' as DateLike), position: p.title, employer, body: p.body, url: p.url });
   }
-
   for (const c of cv.community) {
-    lines.push('  <WorkExperience>');
-    lines.push(`    <Period>${periodXml(formatDateEuropass(c.periodStart), formatDateEuropass(c.periodEnd))}</Period>`);
-    lines.push(`    <Position><Label>${esc(c.role)}</Label></Position>`);
-    lines.push(`    <Employer><Name>${esc(c.organisation)}</Name></Employer>`);
-    lines.push(`    <Activities><Label>${esc(c.body.trim())}</Label></Activities>`);
-    lines.push('    <Volunteer>true</Volunteer>');
-    lines.push('  </WorkExperience>');
+    list.push({ periodStart: c.periodStart, periodEnd: c.periodEnd, position: c.role, employer: c.organisation, body: c.body, url: c.url });
   }
-
   for (const o of cv.openSource) {
-    lines.push('  <WorkExperience>');
-    lines.push(`    <Period>${periodXml(formatDateEuropass(o.periodStart), formatDateEuropass(o.periodEnd))}</Period>`);
-    lines.push(`    <Position><Label>${esc(o.role)}</Label></Position>`);
-    lines.push(`    <Employer><Name>${esc(o.title)}</Name><ContactInfo><Website><Contact>${esc(o.repoUrl)}</Contact></Website></ContactInfo></Employer>`);
-    lines.push(`    <Activities><Label>${esc(o.body.trim())}</Label></Activities>`);
-    lines.push('    <Volunteer>true</Volunteer>');
-    lines.push('  </WorkExperience>');
+    list.push({ periodStart: o.periodStart, periodEnd: o.periodEnd, position: o.role, employer: o.title, body: o.body, url: o.repoUrl });
   }
+  return list;
+}
 
+function emitWorkExperienceList(out: string[], cv: SpecCV): void {
+  const entries = collectWorkEntries(cv);
+  if (entries.length === 0) return;
+  out.push('    <WorkExperienceList>');
+  for (const w of entries) {
+    out.push('      <WorkExperience>');
+    out.push(`        <Period>${periodXml(formatDateEuropass(w.periodStart), formatDateEuropass(w.periodEnd))}</Period>`);
+    out.push(`        <Position><Label>${esc(w.position)}</Label></Position>`);
+    const body = w.body.trim();
+    if (body) out.push(`        <Activities>${esc(body)}</Activities>`);
+    out.push('        <Employer>');
+    out.push(`          <Name>${esc(w.employer)}</Name>`);
+    if (w.url) {
+      out.push('          <ContactInfo>');
+      out.push('            <WebsiteList>');
+      out.push('              <Website>');
+      out.push(`                <Contact>${esc(w.url)}</Contact>`);
+      out.push('              </Website>');
+      out.push('            </WebsiteList>');
+      out.push('          </ContactInfo>');
+    }
+    out.push('        </Employer>');
+    out.push('      </WorkExperience>');
+  }
+  out.push('    </WorkExperienceList>');
+}
+
+function emitEducationList(out: string[], cv: SpecCV): void {
+  if (cv.education.length === 0) return;
+  out.push('    <EducationList>');
   for (const e of cv.education) {
-    lines.push('  <Education>');
-    lines.push(`    <Period>${periodXml(formatDateEuropass(e.periodStart), formatDateEuropass(e.periodEnd))}</Period>`);
-    lines.push(`    <Title><Label>${esc(e.degree)}</Label></Title>`);
-    lines.push(`    <Organisation><Name>${esc(e.institution)}</Name></Organisation>`);
-    if (e.field) lines.push(`    <Subjects><Label>${esc(e.field)}</Label></Subjects>`);
-    lines.push('  </Education>');
+    out.push('      <Education>');
+    out.push(`        <Period>${periodXml(formatDateEuropass(e.periodStart), formatDateEuropass(e.periodEnd))}</Period>`);
+    out.push(`        <Title>${esc(e.degree)}</Title>`);
+    if (e.field) out.push(`        <Activities>${esc(e.field)}</Activities>`);
+    out.push('        <Organisation>');
+    out.push(`          <Name>${esc(e.institution)}</Name>`);
+    out.push('        </Organisation>');
+    out.push('      </Education>');
   }
+  out.push('    </EducationList>');
+}
 
+function emitSkills(out: string[], cv: SpecCV): void {
   const hasSkills = cv.skills && cv.skills.groups.length > 0;
   const hasLanguages = cv.languages && cv.languages.languages.length > 0;
-  if (hasSkills || hasLanguages) {
+  if (!hasSkills && !hasLanguages) return;
+  out.push('    <Skills>');
+
+  if (cv.languages && hasLanguages) {
+    out.push('      <Linguistic>');
+    const natives = cv.languages.languages.filter((l) => l.level === 'native');
+    const foreigns = cv.languages.languages.filter((l) => l.level !== 'native');
+    if (natives.length > 0) {
+      out.push('        <MotherTongueList>');
+      for (const l of natives) {
+        out.push('          <MotherTongue>');
+        out.push('            <Description>');
+        if (l.code) out.push(`              <Code>${esc(l.code)}</Code>`);
+        out.push(`              <Label>${esc(l.name)}</Label>`);
+        out.push('            </Description>');
+        out.push('          </MotherTongue>');
+      }
+      out.push('        </MotherTongueList>');
+    }
+    if (foreigns.length > 0) {
+      out.push('        <ForeignLanguageList>');
+      for (const l of foreigns) {
+        out.push('          <ForeignLanguage>');
+        out.push('            <Description>');
+        if (l.code) out.push(`              <Code>${esc(l.code)}</Code>`);
+        out.push(`              <Label>${esc(l.name)}</Label>`);
+        out.push('            </Description>');
+        out.push('            <ProficiencyLevel>');
+        out.push(`              <Listening>${esc(l.level)}</Listening>`);
+        out.push(`              <Reading>${esc(l.level)}</Reading>`);
+        out.push(`              <SpokenInteraction>${esc(l.level)}</SpokenInteraction>`);
+        out.push(`              <SpokenProduction>${esc(l.level)}</SpokenProduction>`);
+        out.push(`              <Writing>${esc(l.level)}</Writing>`);
+        out.push('            </ProficiencyLevel>');
+        out.push('          </ForeignLanguage>');
+      }
+      out.push('        </ForeignLanguageList>');
+    }
+    out.push('      </Linguistic>');
+  }
+
+  if (cv.skills) {
     const buckets: Record<EuropassBucket, string[]> = {
       JobRelated: [], Digital: [], Communication: [], Organisational: [],
     };
-    if (cv.skills) {
-      for (const g of cv.skills.groups) {
-        buckets[resolveEuropassBucket(g)].push(`${g.name}: ${g.items.join(', ')}`);
-      }
+    for (const g of cv.skills.groups) {
+      buckets[resolveEuropassBucket(g)].push(`${g.name}: ${g.items.join(', ')}`);
     }
-    lines.push('  <Skills>');
-    for (const bucket of ['JobRelated', 'Digital', 'Communication', 'Organisational'] as EuropassBucket[]) {
-      if (buckets[bucket].length === 0) continue;
-      lines.push(`    <${bucket}><Description><Label>${esc(buckets[bucket].join('. '))}</Label></Description></${bucket}>`);
+    if (buckets.Communication.length > 0) {
+      out.push(`      <Communication><Description>${esc(buckets.Communication.join('. '))}</Description></Communication>`);
     }
-    if (cv.languages) {
-      lines.push('    <Linguistic>');
-      for (const l of cv.languages.languages) {
-        if (l.level === 'native') {
-          lines.push(`      <MotherTongue><Description><Label>${esc(l.name)}</Label></Description></MotherTongue>`);
-        } else {
-          lines.push('      <ForeignLanguage>');
-          lines.push(`        <Description><Label>${esc(l.name)}</Label></Description>`);
-          lines.push(`        <ProficiencyLevel><Listening>${esc(l.level)}</Listening><Reading>${esc(l.level)}</Reading><SpokenInteraction>${esc(l.level)}</SpokenInteraction><SpokenProduction>${esc(l.level)}</SpokenProduction><Writing>${esc(l.level)}</Writing></ProficiencyLevel>`);
-          lines.push('      </ForeignLanguage>');
-        }
-      }
-      lines.push('    </Linguistic>');
+    if (buckets.Organisational.length > 0) {
+      out.push(`      <Organisational><Description>${esc(buckets.Organisational.join('. '))}</Description></Organisational>`);
     }
-    lines.push('  </Skills>');
+    if (buckets.JobRelated.length > 0) {
+      out.push(`      <JobRelated><Description>${esc(buckets.JobRelated.join('. '))}</Description></JobRelated>`);
+    }
+    if (buckets.Digital.length > 0) {
+      out.push(`      <Computer><Description>${esc(buckets.Digital.join('. '))}</Description></Computer>`);
+    }
   }
 
-  for (const a of cv.awards) {
-    lines.push(`  <Honour><Date>${dateOnly(formatDateEuropass(a.date))}</Date><Title><Label>${esc(a.title)}</Label></Title><AwardingBody><Label>${esc(a.awarder)}</Label></AwardingBody></Honour>`);
-  }
+  out.push('    </Skills>');
+}
 
-  for (const p of cv.publications) {
-    lines.push(`  <Publication><Date>${dateOnly(formatDateEuropass(p.date))}</Date><Title><Label>${esc(p.title)}</Label></Title><Publisher><Label>${esc(p.publisher)}</Label></Publisher></Publication>`);
+function emitAchievementList(out: string[], cv: SpecCV): void {
+  if (cv.awards.length === 0 && cv.publications.length === 0) return;
+  out.push('    <AchievementList>');
+  if (cv.awards.length > 0) {
+    const desc = cv.awards.map((a) => `${a.title} (${a.awarder})`).join('; ');
+    out.push('      <Achievement>');
+    out.push('        <Title><Code>honors_awards</Code><Label>Honours and Awards</Label></Title>');
+    out.push(`        <Description>${esc(desc)}</Description>`);
+    out.push('      </Achievement>');
   }
-
-  lines.push('</EuropassCV>');
-  return lines.join('\n');
+  if (cv.publications.length > 0) {
+    const desc = cv.publications.map((p) => `${p.title} (${p.publisher})`).join('; ');
+    out.push('      <Achievement>');
+    out.push('        <Title><Code>publications</Code><Label>Publications</Label></Title>');
+    out.push(`        <Description>${esc(desc)}</Description>`);
+    out.push('      </Achievement>');
+  }
+  out.push('    </AchievementList>');
 }
 
 function esc(s: string): string {
@@ -153,15 +284,14 @@ function splitLoc(s: string): [string, string] {
 
 function periodXml(from: EuropassDate, to: EuropassDate): string {
   const parts: string[] = [];
-  parts.push(`<From>${'current' in from ? '<Year>0</Year>' : dateOnly(from)}</From>`);
-  parts.push(`<To>${'current' in to ? '<Current>true</Current>' : dateOnly(to)}</To>`);
+  if (!('current' in from)) parts.push(dateTag('From', from));
+  if ('current' in to) parts.push('<Current>true</Current>');
+  else parts.push(dateTag('To', to));
   return parts.join('');
 }
 
-function dateOnly(d: EuropassDate): string {
-  if ('current' in d) return '<Current>true</Current>';
-  const parts: string[] = [];
-  parts.push(`<Year>${esc(d.year)}</Year>`);
-  if (d.month) parts.push(`<Month>${esc(d.month)}</Month>`);
-  return parts.join('');
+function dateTag(tag: 'From' | 'To', d: { year: string; month?: string }): string {
+  const attrs: string[] = [`year="${esc(d.year)}"`];
+  if (d.month) attrs.push(`month="${esc(d.month)}"`);
+  return `<${tag} ${attrs.join(' ')}/>`;
 }

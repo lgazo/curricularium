@@ -5,12 +5,13 @@ import type { SpecCV } from '../../../../spec/model.js';
 import { Sidebar } from './Sidebar.js';
 import { Main } from './Main.js';
 
-export const CV: FC<{ cv: SpecCV }> = ({ cv }) => (
+export const CV: FC<{ cv: SpecCV; photoUrl: string | null }> = ({ cv, photoUrl }) => (
   <div class="cv-page">
     <Sidebar
       personal={cv.personal}
       skills={cv.skills}
       headline={cv.identity.headline?.body.trim() ?? null}
+      photoUrl={photoUrl}
     />
     <Main cv={cv} />
   </div>
