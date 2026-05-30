@@ -2,6 +2,7 @@ import { registerOutput } from './registry.js';
 import { rawTheme } from './jsonresume/themes/raw.js';
 import { fallbackCommunityThemes } from './jsonresume/themes/community.js';
 import { canonicalTheme } from './europass/themes/canonical.js';
+import { candidateTheme } from './europass/themes/candidate.js';
 import { linkedinSpiritualTheme } from './html/themes/linkedin-spiritual/index.js';
 
 registerOutput({
@@ -24,6 +25,6 @@ registerOutput({
   id: 'europass',
   label: 'Europass XML',
   autoWriteOnRender: false,
-  themes: [canonicalTheme],
-  defaultThemeId: 'canonical',
+  themes: [candidateTheme, canonicalTheme],
+  defaultThemeId: 'candidate',
 });

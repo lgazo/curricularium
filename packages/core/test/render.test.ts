@@ -23,7 +23,7 @@ describe('render entry', () => {
     if (!lr.ok) throw new Error('load failed');
     const r = await render({ cv: lr.cv, outputId: 'europass', themeId: 'canonical' });
     expect(r.contentType).toBe('application/xml');
-    expect(r.filename).toBe('minimal-europass.xml');
+    expect(r.filename).toBe('minimal-europass-canonical.xml');
     expect(new TextDecoder().decode(r.bytes)).toContain('<SkillsPassport');
   });
 

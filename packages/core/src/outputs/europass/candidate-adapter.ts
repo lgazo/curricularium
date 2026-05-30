@@ -117,8 +117,8 @@ function emitCandidateProfile(out: string[], cv: SpecCV): void {
   emitSkills(out, cv);
   out.push('    <NetworksAndMemberships/>');
   out.push('    <ConferencesAndSeminars/>');
-  emitVoluntaryWorks(out, cv);
-  emitAwards(out, cv);
+  out.push('    <VoluntaryWorks/>');
+  out.push('    <CourseCertifications/>');
   out.push('  </CandidateProfile>');
 }
 
@@ -306,7 +306,6 @@ function emitSkills(out: string[], cv: SpecCV): void {
     return;
   }
   const lang = cv.variant.lang || 'en';
-  const lines: string[] = [];
   const communication: string[] = [];
   const organisational: string[] = [];
   const digital: string[] = [];
@@ -327,7 +326,6 @@ function emitSkills(out: string[], cv: SpecCV): void {
   out.push('    <Skills>');
   if (communication.length > 0) {
     out.push('      <CommunicationAndInterpersonalSkills>');
-    for (const e of communication) lines.push(e);
     for (const e of communication) {
       out.push('        <CommunicationAndInterpersonalSkill>');
       out.push(`          <Title languageID="${esc(lang)}">${esc(e)}</Title>`);
@@ -365,19 +363,7 @@ function emitSkills(out: string[], cv: SpecCV): void {
   out.push('    </Skills>');
 }
 
-function emitVoluntaryWorks(out: string[], cv: SpecCV): void {
-  out.push('    <VoluntaryWorks/>');
-  out.push('    <CourseCertifications/>');
-}
-
-function emitAwards(out: string[], cv: SpecCV): void {
-  // Awards have no direct slot in Candidate schema; the section list in user's sample
-  // closed at <CourseCertifications/>. Awards are dropped silently; surface in body if present.
-  if (cv.awards.length === 0) return;
-  // Intentionally no extra element — schema would reject unknowns.
-}
-
-function emitRenderingInformation(out: string[], cv: SpecCV): void {
+function emitRenderingInformation(out: string[], _cv: SpecCV): void {
   out.push('  <RenderingInformation>');
   out.push('    <Design>');
   out.push('      <Template>Template1</Template>');

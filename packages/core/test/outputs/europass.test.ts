@@ -114,3 +114,64 @@ describe('europass canonical theme', () => {
     expect(xml).toContain('C2');
   });
 });
+
+describe('europass candidate (v4) theme', () => {
+  it('renders Candidate root with HR-XML / OAGIS namespaces and required envelope', async () => {
+    const t = findTheme('europass', 'candidate')!;
+    const { bytes } = await t.render(cv(), {});
+    const xml = new TextDecoder().decode(bytes);
+    expect(xml).toContain('<Candidate');
+    expect(xml).toContain('xmlns="http://www.europass.eu/1.0"');
+    expect(xml).toContain('xmlns:oa="http://www.openapplications.org/oagis/9"');
+    expect(xml).toContain('xmlns:hr="http://www.hr-xml.org/3"');
+    expect(xml).toContain('<hr:DocumentID');
+    expect(xml).toContain('<CandidateSupplier>');
+    expect(xml).toContain('<CandidatePerson>');
+    expect(xml).toContain('<CandidateProfile languageCode="en">');
+    expect(xml).toContain('<RenderingInformation>');
+  });
+
+  it('renders PersonName with oa:GivenName and hr:FamilyName', async () => {
+    const t = findTheme('europass', 'candidate')!;
+    const { bytes } = await t.render(cv(), {});
+    const xml = new TextDecoder().decode(bytes);
+    expect(xml).toContain('<oa:GivenName>Jane</oa:GivenName>');
+    expect(xml).toContain('<hr:FamilyName>Doe</hr:FamilyName>');
+  });
+
+  it('encodes phone, email, and address as Communication entries', async () => {
+    const t = findTheme('europass', 'candidate')!;
+    const { bytes } = await t.render(cv(), {});
+    const xml = new TextDecoder().decode(bytes);
+    expect(xml).toContain('<ChannelCode>Telephone</ChannelCode>');
+    expect(xml).toContain('<CountryDialing>421</CountryDialing>');
+    expect(xml).toContain('<oa:DialNumber>000000000</oa:DialNumber>');
+    expect(xml).toContain('<ChannelCode>Email</ChannelCode>');
+    expect(xml).toContain('<Text>j@x.com</Text>');
+    expect(xml).toContain('<oa:AddressLine>Bratislava</oa:AddressLine>');
+    expect(xml).toContain('<CountryCode>sk</CountryCode>');
+  });
+
+  it('emits EmploymentHistory with EmployerHistory/PositionHistory for work entries', async () => {
+    const t = findTheme('europass', 'candidate')!;
+    const { bytes } = await t.render(cv(), {});
+    const xml = new TextDecoder().decode(bytes);
+    expect(xml).toContain('<EmploymentHistory>');
+    expect(xml).toContain('<OrganizationName languageID="en">Foo Inc</OrganizationName>');
+    expect(xml).toContain('<PositionTitle>CTO</PositionTitle>');
+    expect(xml).toContain('<StartDate>2022-01</StartDate>');
+    expect(xml).toContain('<CurrentIndicator>true</CurrentIndicator>');
+  });
+
+  it('emits Skills bucketed into Communication/Organisational/ManagementAndLeadership/Digital containers', async () => {
+    const t = findTheme('europass', 'candidate')!;
+    const { bytes } = await t.render(cv(), {});
+    const xml = new TextDecoder().decode(bytes);
+    expect(xml).toContain('<CommunicationAndInterpersonalSkills>');
+    expect(xml).toContain('speaking');
+    expect(xml).toContain('<ManagementAndLeadershipSkills>');
+    expect(xml).toContain('mentoring');
+    expect(xml).toContain('<DigitalSkills>');
+    expect(xml).toContain('TypeScript');
+  });
+});
