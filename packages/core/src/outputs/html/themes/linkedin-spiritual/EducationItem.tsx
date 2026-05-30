@@ -1,3 +1,5 @@
+/* @jsxRuntime automatic */
+/* @jsxImportSource hono/jsx */
 import type { FC } from 'hono/jsx';
 import type { Education } from '../../../../spec/model.js';
 import { formatDateMMYYYY } from '../../../../spec/canonical.js';

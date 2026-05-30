@@ -1,3 +1,5 @@
+/* @jsxRuntime automatic */
+/* @jsxImportSource hono/jsx */
 import type { FC } from 'hono/jsx';
 import type { SpecCV } from '../../../../spec/model.js';
 import { Sidebar } from './Sidebar.js';
